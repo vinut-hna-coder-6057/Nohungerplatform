@@ -5,11 +5,16 @@ const { signUserToken, signAdminToken } = require("../utils/jwt");
 exports.register = async (req, res) => {
   try {
     
+const { name, email, password } = req.body;
 
-    const { name, email, password } = req.body;
+if (!name || !email || !password) {
+  return res.status(400).json({
+    success: false,
+    message: "All fields required"
+  });
+}
 
-    if (!name || !email || !password) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 if (!emailRegex.test(email)) {
   return res.status(400).json({
@@ -17,25 +22,19 @@ if (!emailRegex.test(email)) {
     message: "Invalid email format"
   });
 }
-      return res.status(400).json({
-        success: false,
-        message: "All fields required"
-      });
-    }
 
-    if (password.length < 8) {
-      return res.status(400).json({
-        success: false,
-        message: "Password must be at least 8 characters"
-      });
-    }
+if (password.length < 8) {
+  return res.status(400).json({
+    success: false,
+    message: "Password must be at least 8 characters"
+  });
+}
 
-    const normalizedEmail = email.toLowerCase().trim();
+const normalizedEmail = email.toLowerCase().trim();
 
-    const existingUser = await User.findOne({
-      email: normalizedEmail
-    });
-
+const existingUser = await User.findOne({
+  email: normalizedEmail
+});
     if (existingUser) {
       return res.status(409).json({
         success: false,
