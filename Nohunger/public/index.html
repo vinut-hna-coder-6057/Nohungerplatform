@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>No Hunger Chatbot</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet" />
+
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css" />
+
+<!-- Your CSS -->
+<link rel="stylesheet" href="css/style.css" />
+
+</head>
+
+<!-- ===== Bottom of <body>, before </body> ===== -->
+
+<!-- External Libraries -->
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
+
+<!-- App Scripts (order matters) -->
+<script src="js/core.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/notifications.js"></script>
+<script src="js/profile.js"></script>
+<script src="js/admin.js"></script>
+<script src="js/donations.js"></script>
+<script src="js/map.js"></script>
+<script src="js/socket.js"></script>
+<script src="js/app.js"></script>
+
+<body>
+<div id="themeToggle">🌙</div>
+
+<!-- impact boxes -->
+<div id="b1" class="impact box1 show">
+<strong>12,480+</strong>Meals Donated
+</div>
+
+<div id="b2" class="impact box2 show">
+<strong>3,920+</strong>People Served
+</div>
+
+<div class="hero-container">
+
+<div class="left">
+<div class="title">No Hunger</div>
+
+<div class="subtitle">
+Bridging hearts through food.  
+Connecting donors, NGOs and people  
+so no one sleeps hungry.
+</div>
+
+<button class="start-btn" onclick="showPage('loginPage')">
+Get Started →
+</button>
+</div>
+
+<div class="right">
+<div class="glow"></div>
+</div>
+
+</div>
+
+
+
+<!-- LOGIN -->
+<!-- LOGIN PAGE -->
+<div class="page-box" id="loginPage">
+
+  <h1>Login</h1>
+
+  <div class="input-field">
+    <input id="loginEmail" type="email" placeholder="Enter Email" required>
+  </div>
+
+  <div class="input-field">
+    <input id="loginPassword" type="password" placeholder="Enter Password" required>
+  </div>
+
+  <button onclick="loginUser()">Login</button>
+
+  <!-- Register Link -->
+  <p style="margin-top:15px;font-size:14px;">
+    Don’t have an account?
+    <span 
+      onclick="showPage('registerPage')" 
+      style="color:#008080;font-weight:600;cursor:pointer;">
+      Register here
+    </span>
+  </p>
+
+  <!-- Back to Home -->
+  <button 
+    class="back-btn" 
+    style="margin-top:15px;"
+    onclick="location.reload()">
+    ⬅ Back
+  </button>
+
+</div>
+
+<!-- REGISTER -->
+<!-- REGISTER PAGE -->
+<div class="page-box" id="registerPage">
+
+  <h1>Create Account</h1>
+
+  <div class="input-field">
+    <input id="registerName" type="text" placeholder="Full Name" required>
+  </div>
+
+  <div class="input-field">
+    <input id="registerEmail" type="email" placeholder="Email Address" required>
+  </div>
+
+  <div class="input-field">
+    <input id="registerPassword" type="password" placeholder="Create Password" required>
+  </div>
+
+  <button onclick="registerUser()">Register</button>
+
+  <!-- Back to Login -->
+  <p style="margin-top:15px;font-size:14px;">
+    Already have an account?
+    <span 
+      onclick="showPage('loginPage')" 
+      style="color:#008080;font-weight:600;cursor:pointer;">
+      Login here
+    </span>
+  </p>
+
+  <!-- Back Button -->
+  <button 
+    class="back-btn" 
+    style="margin-top:15px;"
+    onclick="showPage('loginPage')">
+    ⬅ Back
+  </button>
+
+</div>
+<!-- ADMIN PANEL -->
+<div id="adminPage" class="main-dash" style="flex-direction:column;padding:30px;overflow:auto;">
+  <h1 style="text-align:center;margin-bottom:25px;">🛡 Admin Dashboard</h1>
+<button onclick="openAnalytics()" 
+style="
+background:#008080;
+width:220px;
+margin-bottom:20px;
+align-self:center;
+">
+📊 View Analytics
+</button>
+
+  <!-- STATS -->
+   <!-- USER DETAIL POPUP -->
+<div id="userPopup" style="
+position:fixed;
+top:0;left:0;
+width:100%;height:100%;
+background:rgba(0,0,0,0.6);
+display:none;
+justify-content:center;
+align-items:center;
+z-index:9999;
+">
+
+  <div id="userPopupCard" style="
+  background:white;
+  width:380px;
+  padding:25px;
+  border-radius:16px;
+  color:#222;
+  transform:scale(0.7);
+  opacity:0;
+  transition:0.35s;
+  box-shadow:0 20px 60px rgba(0,0,0,0.3);
+  ">
+
+    <h2 style="margin-top:0">👤 User Details</h2>
+    <div id="userPopupContent"></div>
+
+    <button onclick="closeUserPopup()" style="
+    margin-top:15px;
+    background:#e53935;
+    color:white;
+    border:none;
+    padding:10px 16px;
+    border-radius:8px;
+    cursor:pointer;
+    width:100%;
+    ">
+    Close
+    </button>
+
+  </div>
+</div>
+<!-- ANALYTICS POPUP -->
+<div id="analyticsPopup" style="
+position:fixed;
+top:0;left:0;
+width:100%;height:100%;
+background:rgba(0,0,0,0.7);
+display:none;
+justify-content:center;
+align-items:center;
+z-index:9999;
+">
+
+<div style="
+background:white;
+width:80%;
+max-width:900px;
+padding:25px;
+border-radius:18px;
+color:#222;
+max-height:90vh;
+overflow:auto;
+">
+
+<h2 style="text-align:center">📊 Admin Analytics</h2>
+
+<canvas id="mainChart" height="120"></canvas>
+<br>
+<canvas id="donationChart" height="120"></canvas>
+
+<button onclick="closeAnalytics()" style="
+margin-top:20px;
+background:red;
+color:white;
+border:none;
+padding:10px 18px;
+border-radius:8px;
+width:180px;
+display:block;
+margin-left:auto;
+margin-right:auto;
+">
+Close
+</button>
+
+</div>
+</div>
+
+  <div id="adminStats" 
+       style="display:flex;gap:20px;flex-wrap:wrap;justify-content:center;margin-bottom:30px;">
+  </div>
+
+  <!-- USERS + DONATIONS -->
+  <div style="display:flex;gap:30px;align-items:flex-start;">
+
+    <!-- USERS -->
+    <div style="flex:1;background:#fff;padding:20px;border-radius:12px;color:#222;
+                max-height:500px;overflow-y:auto;">
+      <h2>👥 All Users</h2>
+      <div id="adminUsers"></div>
+    </div>
+
+    <!-- DONATIONS -->
+    <div style="flex:1;background:#fff;padding:20px;border-radius:12px;color:#222;
+                max-height:500px;overflow-y:auto;">
+      <h2>🍱 All Donations</h2>
+      <div id="adminDonations"></div>
+    </div>
+
+  </div>
+
+  <button onclick="location.reload()" 
+          style="margin-top:30px;background:red;width:200px;align-self:center;">
+    Logout
+  </button>
+
+</div>
+
+<!-- LOCATION -->
+<div class="page-box" id="locationPage">
+  <h1>📍 Select Location</h1>
+  <div class="input-field">
+    <input id="locationInput" placeholder="Enter city">
+  </div>
+
+  <iframe id="mapFrame"
+          width="100%"
+          height="200"
+          style="border-radius:12px;border:0;">
+  </iframe>
+
+  <button id="confirmLocationBtn">Confirm Location</button>
+  <button class="back-btn" onclick="showPage('loginPage')">⬅ Back</button>
+</div>
+
+
+<div id="dashboardPage" class="dashboard-page">
+
+  <h1 class="dash-title">Select Your Role</h1>
+
+  <div class="dash-row">
+      <div class="dash-card donor" data-role="donor">
+          🍱 Donor
+          <p>Donate food to help people</p>
+      </div>
+
+      <div class="dash-card receiver" data-role="receiver">
+          🤝 Receiver
+          <p>Request food if needed</p>
+      </div>
+  </div>
+
+  <div class="dash-row center">
+      <div class="dash-card ngo" data-role="ngo">
+          👐 NGO
+          <p>Distribute & manage donations</p>
+      </div>
+  </div>
+
+</div>
+
+
+
+<!-- MAIN DASHBOARD AFTER ROLE -->
+<div id="mainDashboard" class="main-dash">
+
+  <div class="topbar">
+      <div class="logo">🍲 No Hunger</div>
+      <div class="role-title" id="dashRoleTitle">Dashboard</div>
+
+      <div class="top-actions">
+        <div id="bellBtn" style="position:relative;cursor:pointer;">
+  🔔
+  <span id="notifBadge"
+        style="
+          position:absolute;
+          top:-4px;
+          right:-4px;
+          min-width:18px;
+          height:18px;
+          background:red;
+          color:white;
+          font-size:11px;
+          font-weight:bold;
+          border-radius:50%;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          display:none;
+          animation:pulse 1.2s infinite;
+        ">
+    0
+  </span>
+</div>
+
+        <div id="profileBtn" style="font-size:22px;cursor:pointer;">👤</div>
+        <button id="logoutBtn2">Logout</button>
+      </div>
+  </div>
+
+
+  <div class="dash-center">
+
+      <div class="big-card chatbot-card" id="openChatbotCard">
+          🤖 AI CHATBOT
+          <p>Request or donate food</p>
+      </div>
+
+      <div class="big-card leaderboard-card" id="openLeaderboardCard">
+          🏆 LEADERBOARD
+          <p>Top donors in city</p>
+      </div>
+      
+
+
+  </div>
+
+</div>
+
+
+<!-- 🔔 NOTIFICATION POPUP -->
+<div id="notifyPopup" class="notify-popup">
+   <h3>🔔 Notifications</h3>
+   <div id="notifyContent">No notifications</div>
+</div>
+
+<div id="profilePopup" class="notify-popup">
+  <h3>👤 Profile</h3>
+  <div id="profileContent">Loading...</div>
+  <button id="myActivityBtn">📊 My Activity</button>
+</div>
+<!-- 🍱 DONATION CONFIRM POPUP -->
+
+<div id="donorConfirmPopup" style="
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.65);
+display:none;
+justify-content:center;
+align-items:center;
+z-index:9999;
+">
+
+  <!-- Popup Card -->
+
+  <div style="
+  background:#ffffff;
+  width:420px;
+  max-width:90%;
+  padding:25px;
+  border-radius:18px;
+  color:#222;
+  box-shadow:0 20px 60px rgba(0,0,0,0.35);
+  animation:donorPop .3s ease;
+  ">
+
+```
+<h2 style="margin-top:0;text-align:center;">
+  🍱 Confirm Donation
+</h2>
+
+<!-- Details box -->
+<div id="donorConfirmDetails" style="
+background:#f7f7f7;
+padding:14px;
+border-radius:12px;
+margin-top:12px;
+font-size:14px;
+line-height:1.6;
+">
+</div>
+
+<!-- Buttons -->
+<div style="
+display:flex;
+gap:12px;
+margin-top:22px;
+">
+
+  <button onclick="confirmDonationSend()" style="
+  background:#4CAF50;
+  color:white;
+  border:none;
+  padding:12px;
+  border-radius:10px;
+  flex:1;
+  font-weight:600;
+  cursor:pointer;
+  ">
+    ✅ Confirm
+  </button>
+
+  <button onclick="closeDonationPopup()" style="
+  background:#e53935;
+  color:white;
+  border:none;
+  padding:12px;
+  border-radius:10px;
+  flex:1;
+  font-weight:600;
+  cursor:pointer;
+  ">
+    ❌ Cancel
+  </button>
+
+</div>
+```
+
+  </div>
+</div>
+
+<!-- MY ACTIVITY PAGE -->
+<div class="page-box" id="activityPage">
+  <h1>📊 My Activity</h1>
+  <div id="activityOutput" style="text-align:left"></div>
+  <button class="back-btn" onclick="showPage('mainDashboard')">⬅ Back</button>
+</div>
+
+
+<!-- CHATBOT -->
+<div class="page-box" id="chatbotPage">
+
+  <h1>💬 No Hunger</h1>
+  <p id="roleMessage"></p>
+
+  <!-- Chat Controls -->
+  <div id="chatControls" style="display:flex;gap:8px;align-items:center;">
+      
+      <input id="chatInput" placeholder="Type..." style="flex:1;">
+
+      <!-- Hidden File Input -->
+      <input type="file" id="foodImageInput" accept="image/*" style="display:none;">
+
+      <!-- Upload Button -->
+      <button id="uploadBtn" style="width:50px;">📷</button>
+
+      <button id="sendBtn">Send</button>
+  </div>
+ 
+
+
+  <!-- Image Preview -->
+  <div id="imagePreview" style="margin-top:10px;"></div>
+
+  <!-- Chat Messages -->
+  <div id="chatOutput"></div>
+<!-- Veg / Non-Veg Selection (Only for Donor) -->
+<div id="foodTypeContainer" style="display:none;margin-bottom:12px;">
+
+  <p style="margin-bottom:6px;font-size:14px;">Select Food Type:</p>
+
+  <div style="display:flex;gap:10px;">
+
+    <button id="vegBtn" class="food-type-btn veg">
+      🟢 Veg
+    </button>
+
+    <button id="nonVegBtn" class="food-type-btn nonveg">
+      🔴 Non-Veg
+    </button>
+
+  </div>
+</div>
+
+
+  <!-- Back Button (ONLY here now) -->
+  <button class="back-btn" onclick="showPage('mainDashboard')">⬅ Back</button>
+
+</div>
+
+<script src="js/config.js"></script>
+
+<script src="js/core.js"></script>
+
+<script src="js/socket.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/profile.js"></script>
+<script src="js/donations.js"></script>
+<script src="js/notifications.js"></script>
+<script src="js/map.js"></script>
+<script src="js/admin.js"></script>
+
+<script src="js/app.js"></script>
+
+<!-- TRACK ORDER MODAL -->
+<!-- TRACK ORDER MODAL -->
+<div id="trackModal"
+     style="
+     display:none;
+     position:fixed;
+     top:0;
+     left:0;
+     width:100%;
+     height:100%;
+     background:rgba(0,0,0,0.6);
+     justify-content:center;
+     align-items:center;
+     z-index:9999;
+">
+
+  <div style="
+      background:white;
+      width:90%;
+      max-width:900px;
+      height:85%;
+      border-radius:20px;
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+  ">
+
+    <!-- HEADER -->
+    <div id="trackHeader" style="
+background:#16a34a;
+color:white;
+padding:18px;
+font-weight:600;
+font-size:18px;
+text-align:center;
+">
+
+🚚 Order is on the way
+
+<div id="arrivalText" style="
+font-size:14px;
+font-weight:400;
+margin-top:4px;
+">
+Calculating route...
+</div>
+
+</div>
+
+    <!-- MAP -->
+    <div id="trackMap"
+         style="
+         flex:1;
+         width:100%;
+         ">
+    </div>
+
+    <!-- CLOSE BUTTON -->
+    <button onclick="closeTrackModal()"
+        style="
+        height:60px;
+        background:#ef4444;
+        color:white;
+        font-size:16px;
+        border:none;
+        cursor:pointer;
+        ">
+      Close
+    </button>
+
+  </div>
+</div>
+
+<div id="mealPopup" style="
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.6);
+display:none;
+justify-content:center;
+align-items:center;
+z-index:9999;
+">
+
+<div style="
+background:white;
+width:380px;
+padding:30px;
+border-radius:20px;
+text-align:center;
+color:#222;
+box-shadow:0 20px 60px rgba(0,0,0,0.35);
+animation:popIn 0.35s ease;
+">
+
+<div style="font-size:60px;">🍽</div>
+
+<h2 style="margin:10px 0;">Enjoy Your Meal!</h2>
+
+<p style="font-size:14px;color:#555;">
+Food has been successfully delivered.  
+Thank you for being part of <b>No Hunger</b>.
+</p>
+
+<button onclick="closeMealPopup()" style="
+margin-top:15px;
+background:#16a34a;
+color:white;
+border:none;
+padding:12px 20px;
+border-radius:10px;
+cursor:pointer;
+width:100%;
+">
+Done
+</button>
+
+</div>
+</div>
+</body>
+</html>
