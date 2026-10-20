@@ -1,5 +1,6 @@
 const { Server } = require("socket.io");
 const Notification = require("../models/Notification");
+const User = require("../models/User");
 const activeUsers = require("../utils/activeUsers");
 const calculateDistance = require("../utils/distance");
 const { verifyToken } = require("../utils/jwt");
@@ -50,12 +51,15 @@ function initSocket(server, allowedOrigin = "http://localhost:4000") {
     }
 
     const isOwner =
-      request.senderEmail === tokenEmail;
+      request.senderEmail === tokenEmail || request.donorEmail === tokenEmail;
+
+    const isReceiver =
+      request.receiverEmail === tokenEmail;
 
     const isHandler =
       request.handler === tokenEmail;
 
-    if (!isOwner && !isHandler) {
+    if (!isOwner && !isReceiver && !isHandler) {
       socket.emit("socketError", {
         message: "Access denied"
       });
@@ -75,34 +79,33 @@ function initSocket(server, allowedOrigin = "http://localhost:4000") {
         const tokenEmail = getEmailFromSocket(socket);
         if (!tokenEmail) return;
 
-        const { requestId, lat, lng } = data;
-        if (
-  !requestId ||
-  lat == null ||
-  lng == null
-) {
-  return;
-}
+        const { requestId, lat, lng } = data || {};
+        const latitude = Number(lat);
+        const longitude = Number(lng);
+        if (!requestId || !Number.isFinite(latitude) || latitude < -90 || latitude > 90 ||
+            !Number.isFinite(longitude) || longitude < -180 || longitude > 180) return;
 
         const request = await Notification.findOne({ requestId });
 
         if (!request || !request.receiverLocation) return;
 
         if (request.handler !== tokenEmail) {
-  
           return;
         }
+
+        const handler = await User.findOne({ email: tokenEmail }).select("role");
+        if (handler?.role?.toLowerCase() !== "ngo") return;
 
         const receiverLat = request.receiverLocation.lat;
         const receiverLng = request.receiverLocation.lng;
 
-        const distance = calculateDistance(lat, lng, receiverLat, receiverLng);
+        const distance = calculateDistance(latitude, longitude, receiverLat, receiverLng);
 
         const etaMinutes = Math.max(1, Math.round((distance / 25) * 60));
 
         io.to(`request_${requestId}`).emit("ngoLiveLocation", {
-          ngoLat: lat,
-          ngoLng: lng,
+          ngoLat: latitude,
+          ngoLng: longitude,
           receiverLat,
           receiverLng,
           eta: etaMinutes
@@ -113,10 +116,7 @@ function initSocket(server, allowedOrigin = "http://localhost:4000") {
       }
     });
 
-    socket.on("registerLocation", ({ role, location, email }) => {
-
-      if (!role || !location || !email) return;
-
+    socket.on("registerLocation", async ({ email } = {}) => {
       const tokenEmail = getEmailFromSocket(socket);
 
       if (!tokenEmail) {
@@ -124,23 +124,37 @@ function initSocket(server, allowedOrigin = "http://localhost:4000") {
         return;
       }
 
-      const normalizedEmail = email.toLowerCase().trim();
-
-      if (normalizedEmail !== tokenEmail) {
+      if (typeof email !== "string" || email.toLowerCase().trim() !== tokenEmail) {
         socket.emit("socketError", { message: "Email does not match token" });
         return;
       }
 
-      socket.email = normalizedEmail;
+      const normalizedEmail = tokenEmail;
+      let user;
+      try {
+        user = await User.findOne({ email: normalizedEmail }).select("role location");
+      } catch (err) {
+        console.error("registerLocation lookup error:", err.message);
+        socket.emit("socketError", { message: "Unable to register location" });
+        return;
+      }
+      if (!user?.role || !user?.location) {
+        socket.emit("socketError", { message: "User role and location are required" });
+        return;
+      }
 
-      if (activeUsers.has(normalizedEmail)) {
+      const activeSocketId = activeUsers.get(normalizedEmail);
+      if (activeSocketId && activeSocketId !== socket.id) {
         socket.emit("alreadyLoggedIn");
         return;
       }
 
+      if (socket.locationRoom) socket.leave(socket.locationRoom);
+      socket.email = normalizedEmail;
       activeUsers.set(normalizedEmail, socket.id);
 
-      const room = `${role.toLowerCase().trim()}_${location.toLowerCase().trim()}`;
+      const room = `${user.role.toLowerCase().trim()}_${user.location.toLowerCase().trim()}`;
+      socket.locationRoom = room;
       socket.join(room);
     });
 

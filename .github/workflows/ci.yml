@@ -1,0 +1,74 @@
+﻿name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate backend and frontend JavaScript
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      MONGO_TEST_URI: mongodb://127.0.0.1:27017/nohunger_test?replicaSet=rs0
+    defaults:
+      run:
+        working-directory: Nohunger
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Node.js 22.23.3
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: Nohunger/.nvmrc
+          cache: npm
+          cache-dependency-path: Nohunger/package-lock.json
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Start and initialize transaction-capable MongoDB replica set
+        working-directory: .
+        run: |
+          docker run --detach --name nohunger-test-mongodb --publish 27017:27017 mongo:7.0 --replSet rs0 --bind_ip_all
+          mongo_ready=false
+          for attempt in {1..30}; do
+            if docker exec nohunger-test-mongodb mongosh --quiet --eval "db.adminCommand({ping:1}).ok"; then
+              mongo_ready=true
+              break
+            fi
+            sleep 1
+          done
+          test "$mongo_ready" = true
+          docker exec nohunger-test-mongodb mongosh --quiet --eval "rs.initiate({_id:'rs0',members:[{_id:0,host:'localhost:27017'}]})"
+          replica_ready=false
+          for attempt in {1..30}; do
+            if docker exec nohunger-test-mongodb mongosh --quiet --eval "quit(rs.status().myState === 1 ? 0 : 1)"; then
+              replica_ready=true
+              break
+            fi
+            sleep 1
+          done
+          test "$replica_ready" = true
+
+      - name: Check JavaScript syntax
+        run: npm run check:syntax
+
+      - name: Audit production dependencies
+        run: npm audit --omit=dev
+
+      - name: Audit all dependencies (fail on high or critical)
+        run: npm audit --audit-level=high
+
+      - name: Run tests
+        run: npm test -- --ci
