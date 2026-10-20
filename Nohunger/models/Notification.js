@@ -27,6 +27,8 @@ const notificationSchema = new mongoose.Schema({
   },
 
   senderEmail: String,
+  donorEmail: String,
+  receiverEmail: String,
 
   location: {
     type: String,

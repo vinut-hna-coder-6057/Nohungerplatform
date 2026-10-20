@@ -1,7 +1,7 @@
 const multer = require("multer");
 const fs = require("fs");
 const path = require("path");
-const { v4: uuidv4 } = require("uuid");
+const { randomUUID } = require("crypto");
 const uploadDir = path.join(__dirname, "../uploads");
 
 if (!fs.existsSync(uploadDir)) {
@@ -15,7 +15,7 @@ const storage = multer.diskStorage({
   filename: function (req, file, cb) {
     const ext = path.extname(file.originalname).toLowerCase();
 
-    cb(null, uuidv4() + ext);
+    cb(null, randomUUID() + ext);
   }
 });
 const imageFilter = (req, file, cb) => {

@@ -2,6 +2,7 @@ const express = require("express");
 const authController = require("../controllers/authController");
 const userController = require("../controllers/userController");
 const notificationController = require("../controllers/notificationController");
+const requestStatusController = require("../controllers/requestStatusController");
 const donationController = require("../controllers/donationController");
 const adminController = require("../controllers/adminController");
 const upload = require("../config/multer");
@@ -27,8 +28,8 @@ router.get("/my-activity/:email", authMiddleware, requireSelfEmail, userControll
 
 router.post("/notify", authMiddleware, notificationController.createNotification);
 router.get("/notifications/:role/:location", authMiddleware, notificationController.getNotifications);
-router.post("/update-status", authMiddleware, notificationController.updateStatus);
-router.post("/save-receiver-location", authMiddleware, notificationController.saveReceiverLocation);
+router.post("/update-status", authMiddleware, requestStatusController.updateStatus);
+router.post("/save-receiver-location", authMiddleware, requestStatusController.saveReceiverLocation);
 
 router.post("/donate", authMiddleware, (req, res, next) => {
   upload.single("image")(req, res, (err) => {

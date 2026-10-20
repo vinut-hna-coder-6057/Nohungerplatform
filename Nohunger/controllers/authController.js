@@ -61,8 +61,8 @@ await newUser.save();
         <p>Next: Login and choose your role + location.</p>
       `;
       await sendMail(normalizedEmail, subject, html);
-    } catch (mailErr) {
-     
+    } catch {
+      console.error("Welcome email delivery failed; registration completed.");
     }
 
     res.json({ success: true });

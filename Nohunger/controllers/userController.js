@@ -61,8 +61,8 @@ const io = req.app.get("io");
         <p>You will receive realtime notifications.</p>
       `;
       await sendMail(req.user.email, subject, html);
-    } catch (mailErr) {
-      console.error("Mail error ignored:", mailErr.message);
+    } catch {
+      console.error("Role activation email delivery failed; role activation completed.");
     }
     const oneDayAgo = new Date();
 oneDayAgo.setDate(oneDayAgo.getDate() - 1);
