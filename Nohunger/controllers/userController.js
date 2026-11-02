@@ -2,6 +2,9 @@ const User = require("../models/User");
 const Notification = require("../models/Notification");
 const sendMail = require("../utils/mail");
 const { signUserToken } = require("../utils/jwt");
+const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({
+  "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+}[char]));
 
 exports.registerRole = async (req, res) => {
   try {
@@ -55,8 +58,8 @@ const io = req.app.get("io");
         <h2>Role Activated</h2>
         <p>Your role has been activated successfully.</p>
         <ul>
-          <li><b>Role:</b> ${role}</li>
-          <li><b>Location:</b> ${location}</li>
+          <li><b>Role:</b> ${escapeHtml(role)}</li>
+          <li><b>Location:</b> ${escapeHtml(location)}</li>
         </ul>
         <p>You will receive realtime notifications.</p>
       `;
@@ -77,10 +80,14 @@ const existingNotifs = await Notification.find({
 .limit(50);
 
     existingNotifs.forEach(n => {
-      io.to(`${role}_${locLower}`).emit("newNotification", n);
+      if (io) io.to(`${role}_${locLower}`).emit("newNotification", n);
     });
 
-    const token = signUserToken(email, { role, location: locLower });
+    const token = signUserToken(email, {
+      role,
+      location: locLower,
+      tokenVersion: existingUser.tokenVersion || 0
+    });
     res.json({ success: true, token });
 
   } catch (err) {

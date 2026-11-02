@@ -4,18 +4,10 @@ const User = require("../models/User");
 const activeUsers = require("../utils/activeUsers");
 const calculateDistance = require("../utils/distance");
 const { verifyToken } = require("../utils/jwt");
+const { isTokenRevoked } = require("../utils/authState");
 
 function getEmailFromSocket(socket) {
-  const token = socket.handshake.auth?.token;
-  if (!token) return null;
-
-  try {
-    const decoded = verifyToken(token);
-    if (decoded.isAdmin) return null;
-    return decoded.email;
-  } catch {
-    return null;
-  }
+  return socket.user?.email || null;
 }
 
 function initSocket(server, allowedOrigin = "http://localhost:4000") {
@@ -23,6 +15,31 @@ function initSocket(server, allowedOrigin = "http://localhost:4000") {
     cors: {
       origin: allowedOrigin,
       methods: ["GET", "POST"]
+    }
+  });
+
+  io.use(async (socket, next) => {
+    const token = socket.handshake.auth?.token;
+    if (!token) return next(new Error("Unauthorized"));
+    try {
+      const user = verifyToken(token);
+      if (user.isAdmin || !user.email) return next(new Error("Unauthorized"));
+      if (!Number.isInteger(user.tokenVersion)) return next(new Error("Unauthorized"));
+      if (isTokenRevoked(user.jti)) return next(new Error("Unauthorized"));
+      const account = await User.findOne({
+        email: user.email.toLowerCase().trim()
+      }).select("_id disabled tokenVersion");
+      if (!account || account.disabled ||
+          (Number.isInteger(user.tokenVersion) && user.tokenVersion !== account.tokenVersion)) {
+        return next(new Error("Unauthorized"));
+      }
+      socket.user = {
+        email: user.email.toLowerCase().trim(),
+        jti: user.jti
+      };
+      next();
+    } catch {
+      next(new Error("Invalid or expired token"));
     }
   });
 

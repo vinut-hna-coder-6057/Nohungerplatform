@@ -12,6 +12,13 @@ app.use(
     contentSecurityPolicy: false
   })
 );
+app.use((req, res, next) => {
+  res.setHeader(
+    "Content-Security-Policy",
+    "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; media-src 'self' https://www.soundjay.com; connect-src 'self' ws: wss: https:; frame-src https://www.google.com"
+  );
+  next();
+});
 
 app.use(cors({
   origin: process.env.ALLOWED_ORIGIN || "http://localhost:4000",

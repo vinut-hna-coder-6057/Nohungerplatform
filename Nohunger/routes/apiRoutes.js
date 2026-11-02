@@ -6,18 +6,28 @@ const requestStatusController = require("../controllers/requestStatusController"
 const donationController = require("../controllers/donationController");
 const adminController = require("../controllers/adminController");
 const upload = require("../config/multer");
+const { validateUploadedImage } = require("../config/multer");
 const {
   authMiddleware,
   adminMiddleware,
   requireSelfEmail
 } = require("../middleware/auth");
+const { rateLimit } = require("../middleware/rateLimit");
 
 const router = express.Router();
+const sensitiveLimit = rateLimit({
+  windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
+  max: Number(process.env.RATE_LIMIT_MAX) || 100
+});
+const authLimit = rateLimit({
+  windowMs: Number(process.env.AUTH_RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
+  max: Number(process.env.AUTH_RATE_LIMIT_MAX) || 10
+});
 
 /* Public auth */
-router.post("/register", authController.register);
-router.post("/login", authController.login);
-router.post("/admin/login", authController.adminLogin);
+router.post("/register", authLimit, authController.register);
+router.post("/login", authLimit, authController.login);
+router.post("/admin/login", authLimit, authController.adminLogin);
 router.get("/leaderboard", userController.getLeaderboard);
 
 /* Protected user routes */
@@ -26,19 +36,19 @@ router.post("/registerRole", authMiddleware, userController.registerRole);
 router.get("/profile/:email", authMiddleware, requireSelfEmail, userController.getProfile);
 router.get("/my-activity/:email", authMiddleware, requireSelfEmail, userController.getMyActivity);
 
-router.post("/notify", authMiddleware, notificationController.createNotification);
+router.post("/notify", sensitiveLimit, authMiddleware, notificationController.createNotification);
 router.get("/notifications/:role/:location", authMiddleware, notificationController.getNotifications);
-router.post("/update-status", authMiddleware, requestStatusController.updateStatus);
+router.post("/update-status", sensitiveLimit, authMiddleware, requestStatusController.updateStatus);
 router.post("/save-receiver-location", authMiddleware, requestStatusController.saveReceiverLocation);
 
-router.post("/donate", authMiddleware, (req, res, next) => {
+router.post("/donate", sensitiveLimit, authMiddleware, (req, res, next) => {
   upload.single("image")(req, res, (err) => {
     if (err) {
       return res.status(400).json({ success: false, message: err.message });
     }
     next();
   });
-}, donationController.createDonation);
+}, validateUploadedImage, donationController.createDonation);
 router.get("/donations/:location", authMiddleware, donationController.getDonationsByLocation);
 
 /* Protected admin routes */

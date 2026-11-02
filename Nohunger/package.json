@@ -6,8 +6,10 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "test": "jest --runInBand",
-    "check:syntax": "node scripts/check-js-syntax.js"
+    "test": "jest --runInBand --testPathIgnorePatterns=tests/e2e",
+    "check": "npm run check:syntax",
+    "check:syntax": "node scripts/check-js-syntax.js",
+    "test:e2e": "playwright test"
   },
   "keywords": [
     "food",
@@ -35,6 +37,7 @@
   },
   "devDependencies": {
     "jest": "^30.5.2",
+    "@playwright/test": "^1.56.1",
     "socket.io-client": "^4.8.3",
     "supertest": "^7.3.1"
   }

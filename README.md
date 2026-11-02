@@ -150,7 +150,8 @@ Copy `.env.example` to `.env` and fill in your own values:
 PORT=4000
 
 # Database
-MONGO_URI=mongodb://localhost:27017/nohunger
+# Transactions require a replica set or sharded cluster.
+MONGO_URI=mongodb://localhost:27017/nohunger?replicaSet=rs0
 
 # JWT
 JWT_SECRET=your_jwt_secret_here
@@ -165,7 +166,19 @@ ALLOWED_ORIGIN=http://localhost:4000
 # Email
 EMAIL_USER=your_email@gmail.com
 EMAIL_PASS=your_app_password
+
+# Rate limiting
+AUTH_RATE_LIMIT_WINDOW_MS=900000
+AUTH_RATE_LIMIT_MAX=10
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX=100
 ```
+
+User JWTs include a persistent token version. Logout increments that version
+and revokes the current token identifier, so copied tokens cannot be reused
+after logout. Socket.IO uses the same checks. The built-in rate limiter is
+suitable for a single process; multi-instance deployments should replace it
+with a shared store while preserving these limits.
 
 Use `scripts/hash-admin-password.js` to generate a bcrypt hash for `ADMIN_PASSWORD_HASH`.
 
@@ -194,16 +207,20 @@ http://localhost:4000
 
 ```bash
 npm start     # start the server
-npm run dev   # start with nodemon (auto-restart)
+npm run dev   # start with Node's watch mode
 npm test      # run Jest test suite
+npm run check:syntax  # validate backend and frontend JavaScript
+npx playwright install chromium  # install the E2E browser once
+$env:E2E_BASE_URL="http://localhost:4000"; npm run test:e2e
 ```
 
 ## 🧪 Testing
 
-Tests live in `tests/` and cover auth, login, profile, health/status, notifications, admin, and route protection. Run them with:
+Tests live in `tests/` and cover auth, login, profile, health/status, notifications, admin, route protection, request transitions, and Socket.IO authorization. Transaction integration tests use `MONGO_TEST_URI` and are skipped when it is not configured. Playwright tests require `E2E_BASE_URL`; the admin test additionally requires `E2E_ADMIN_EMAIL` and `E2E_ADMIN_PASSWORD`.
 
 ```bash
 npm test
+$env:MONGO_TEST_URI="mongodb://127.0.0.1:27017/nohunger_test?replicaSet=rs0"; npm test -- tests/requestStatus.integration.test.js
 ```
 
 ## 🔮 Future Enhancements

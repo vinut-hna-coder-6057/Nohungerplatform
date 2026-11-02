@@ -1,12 +1,33 @@
 const mongoose = require("mongoose");
 const User = require("../models/User");
 const Notification = require("../models/Notification");
+const Donation = require("../models/Donation");
 const { STATUS_ROLE_MAP } = require("../utils/statusAuth");
 
 const normalize = value => String(value || "").toLowerCase().trim();
 
 function appendHistory(status) {
   return { status, at: new Date() };
+}
+
+async function syncDonationStatus(requestId, status, session) {
+  if (mongoose.connection.readyState !== 1) return;
+  const donationStatus = {
+    receiver_accepted: "reserved",
+    self_collect: "reserved",
+    ask_ngo: "reserved",
+    ngo_accepted: "reserved",
+    received: "completed",
+    ngo_delivered: "completed",
+    receiver_declined: "available"
+  }[status];
+  if (donationStatus) {
+    await Donation.updateOne(
+      { requestId, status: { $nin: ["completed", "cancelled", "expired"] } },
+      { $set: { status: donationStatus } },
+      { session }
+    );
+  }
 }
 
 async function updateRelatedNotifications(requestId, anchorId, fields, status, session) {
@@ -310,6 +331,9 @@ exports.updateStatus = async (req, res) => {
           events,
           session
         });
+        if (!result?.error) {
+          await syncDonationStatus(requestId.trim(), status, session);
+        }
       });
     } finally {
       await session.endSession();

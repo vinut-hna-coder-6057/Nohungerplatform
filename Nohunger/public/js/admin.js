@@ -93,11 +93,11 @@ async function loadAdmin() {
           box-shadow:0 4px 10px rgba(0,0,0,0.1);
         ">
           <b style="font-size:15px;">🍛 ${escapeHtml(x.foodDetails)}</b><br>
-          📍 Location: ${x.location}<br>
-          📧 Donor: ${x.donorEmail || "Unknown"}<br>
+          📍 Location: ${escapeHtml(x.location || "-")}<br>
+          📧 Donor: ${escapeHtml(x.donorEmail || "Unknown")}<br>
           Status:
           <span style="font-weight:bold;color:${x.status === "available" ? "green" : "red"};">
-            ${x.status}
+            ${escapeHtml(x.status || "-")}
           </span>
           <br>
           🕒 ${new Date(x.createdAt).toLocaleString()}
@@ -166,7 +166,7 @@ window.openUserPopup = async function (id) {
       <p><b>Name:</b> ${escapeHtml(u.name)}</p>
       <p><b>Email:</b> ${escapeHtml(u.email)}</p>
       <p><b>Role:</b> ${escapeHtml(u.role)|| "-"}</p>
-      <p><b>Location:</b> ${u.location || "-"}</p>
+      <p><b>Location:</b> ${escapeHtml(u.location || "-")}</p>
       <hr>
       <p>🍱 Donations: ${u.donationsCount || 0}</p>
       <p>🤝 Received: ${u.receivedCount || 0}</p>

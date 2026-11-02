@@ -1,6 +1,7 @@
 const crypto = require("crypto");
 const User = require("../models/User");
 const Notification = require("../models/Notification");
+const Donation = require("../models/Donation");
 exports.createNotification = async (req, res) => {
   try {
     const { details, image, foodType } = req.body;
@@ -38,7 +39,24 @@ exports.createNotification = async (req, res) => {
 
     const requestId = `NH-${cityCode}-${dateStr}-${uniquePart}`;
 
+    let donation = null;
+    if (senderRole === "donor") {
+      donation = await Donation.create({
+        donorEmail: email,
+        requestId,
+        location: loc,
+        foodDetails: details?.q1 || "Food donation",
+        quantity: details?.q2 || "-",
+        foodType: foodType || "Not specified",
+        image: typeof image === "string" && image.startsWith("/uploads/")
+          ? image
+          : null,
+        expiryTime: new Date(Date.now() + 2 * 60 * 60 * 1000)
+      });
+    }
+
     const docs = allowedTargets.map(targetRole => ({
+      donationId: donation?._id,
       requestId,
       role: targetRole,
       fromRole: senderRole,
@@ -65,7 +83,9 @@ exports.createNotification = async (req, res) => {
           : "donor_deciding",
 
       details: details || {},
-      image: image || null,
+      image: typeof image === "string" && image.startsWith("/uploads/")
+        ? image
+        : null,
       history: [{ status: "created", at: new Date() }]
     }));
 
@@ -74,7 +94,7 @@ exports.createNotification = async (req, res) => {
     docs.forEach(n => {
       const room = `${n.role}_${n.location}`.toLowerCase().trim();
 
-      io.to(room).emit("newNotification", n);
+      if (io) io.to(room).emit("newNotification", n);
     });
 
     res.json({ success: true, requestId });

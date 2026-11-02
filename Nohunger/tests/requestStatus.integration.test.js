@@ -13,7 +13,7 @@ const originalStartSession = mongoose.startSession.bind(mongoose);
 process.env.JWT_SECRET = jwtSecret;
 
 function token(email) {
-  return jwt.sign({ email }, jwtSecret, { expiresIn: "5m" });
+  return jwt.sign({ email, tokenVersion: 0 }, jwtSecret, { expiresIn: "5m" });
 }
 
 function statusRequest(email, requestId, status = "received") {

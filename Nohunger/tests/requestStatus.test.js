@@ -33,7 +33,7 @@ const session = {
 };
 
 function token(email) {
-  return jwt.sign({ email }, JWT_SECRET, { expiresIn: "5m" });
+  return jwt.sign({ email, tokenVersion: 0 }, JWT_SECRET, { expiresIn: "5m" });
 }
 
 function matches(record, filter) {
@@ -79,11 +79,11 @@ function seedRequest(overrides = {}) {
 
 function setupUsers() {
   users.clear();
-  users.set("donor@example.test", { email: "donor@example.test", role: "donor", location: "north city", donationsCount: 0 });
-  users.set("receiver-a@example.test", { email: "receiver-a@example.test", role: "receiver", location: "north city", receivedCount: 0 });
-  users.set("receiver-b@example.test", { email: "receiver-b@example.test", role: "receiver", location: "north city", receivedCount: 0 });
-  users.set("receiver-other@example.test", { email: "receiver-other@example.test", role: "receiver", location: "south city", receivedCount: 0 });
-  users.set("ngo@example.test", { email: "ngo@example.test", role: "ngo", location: "north city", ngoServices: 0 });
+  users.set("donor@example.test", { email: "donor@example.test", role: "donor", location: "north city", tokenVersion: 0, donationsCount: 0 });
+  users.set("receiver-a@example.test", { email: "receiver-a@example.test", role: "receiver", location: "north city", tokenVersion: 0, receivedCount: 0 });
+  users.set("receiver-b@example.test", { email: "receiver-b@example.test", role: "receiver", location: "north city", tokenVersion: 0, receivedCount: 0 });
+  users.set("receiver-other@example.test", { email: "receiver-other@example.test", role: "receiver", location: "south city", tokenVersion: 0, receivedCount: 0 });
+  users.set("ngo@example.test", { email: "ngo@example.test", role: "ngo", location: "north city", tokenVersion: 0, ngoServices: 0 });
 
   User.findOne.mockImplementation(({ email }) => ({
     select: () => Promise.resolve(users.get(email) || null)

@@ -2,6 +2,10 @@ const bcrypt = require("bcrypt");
 const User = require("../models/User");
 const sendMail = require("../utils/mail");
 const { signUserToken, signAdminToken } = require("../utils/jwt");
+const { revokeToken } = require("../utils/authState");
+const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({
+  "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+}[char]));
 exports.register = async (req, res) => {
   try {
     
@@ -56,7 +60,7 @@ await newUser.save();
     try {
       const subject = "Welcome to No Hunger 🤝";
       const html = `
-        <h2>Hi ${name} 👋</h2>
+        <h2>Hi ${escapeHtml(name)} 👋</h2>
         <p>You are successfully registered in <b>No Hunger</b>.</p>
         <p>Next: Login and choose your role + location.</p>
       `;
@@ -109,7 +113,8 @@ exports.login = async (req, res) => {
 
     const token = signUserToken(normalizedEmail, {
       role: user.role,
-      location: user.location
+      location: user.location,
+      tokenVersion: user.tokenVersion || 0
     });
 
     res.json({ success: true, token, email: normalizedEmail });
@@ -124,12 +129,29 @@ exports.login = async (req, res) => {
 }
 };
 
-exports.logout = (req, res) => {
+exports.logout = async (req, res) => {
   const activeUsers = require("../utils/activeUsers");
   const email = req.user?.email || req.body.email;
 
   if (email) {
+    const jwt = require("jsonwebtoken");
+    const decoded = jwt.decode(req.authToken || "");
+    if (decoded) revokeToken(decoded.jti, decoded.exp);
     activeUsers.delete(email);
+    const io = req.app.get("io");
+    if (io) {
+      for (const socket of io.sockets.sockets.values()) {
+        if (socket.user?.email === email.toLowerCase().trim()) {
+          socket.disconnect(true);
+        }
+      }
+      if (typeof User.updateOne === "function") {
+        await User.updateOne(
+          { email: email.toLowerCase().trim() },
+          { $inc: { tokenVersion: 1 } }
+        );
+      }
+    }
   }
 
   res.json({ success: true });

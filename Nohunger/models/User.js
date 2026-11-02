@@ -4,6 +4,8 @@ const userSchema = new mongoose.Schema({
   name: String,
   email: { type: String, unique: true },
   password: { type: String, required: true },
+  tokenVersion: { type: Number, default: 0 },
+  disabled: { type: Boolean, default: false },
   role: String,
   location: String,
   donationsCount: { type: Number, default: 0 },

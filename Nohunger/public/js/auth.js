@@ -56,6 +56,8 @@ window.loginUser = async function () {
     if (data.token) {
       sessionStorage.setItem("token", data.token);
       socket.auth = getSocketAuth();
+      if (socket.connected) socket.disconnect();
+      socket.connect();
     }
     alert("✅ Login successful!");
     showPage("locationPage");
@@ -119,6 +121,7 @@ function initLogout() {
     }));
 
     clearNgoGpsWatch();
+    socket.disconnect();
     sessionStorage.clear();
     localStorage.removeItem("lockedRole");
     localStorage.removeItem("locationValue");
@@ -179,6 +182,8 @@ function initRoleSelection() {
         if (regData.token) {
           sessionStorage.setItem("token", regData.token);
           socket.auth = getSocketAuth();
+          if (socket.connected) socket.disconnect();
+          socket.connect();
         }
       } catch (e) {
         console.error(e);

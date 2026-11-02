@@ -2,21 +2,25 @@ const Donation = require("../models/Donation");
 
 let intervalId;
 
-function startDonationExpiryWorker() {
+async function expireDonations() {
+  const now = new Date();
+  const result = await Donation.updateMany(
+    {
+      status: "available",
+      expiryTime: { $lte: now }
+    },
+    {
+      $set: { status: "expired" }
+    }
+  );
+  return result;
+}
+
+function startDonationExpiryWorker(intervalMs = 60000) {
+  if (intervalId) return;
   intervalId = setInterval(async () => {
     try {
-      const now = new Date();
-
-      await Donation.updateMany(
-        {
-          status: "available",
-          expiryTime: { $lt: now }
-        },
-        {
-          $set: { status: "expired" }
-        }
-      );
-
+      await expireDonations();
     } catch (err) {
       console.error("Expiry worker error:", err);
     }
@@ -26,10 +30,12 @@ function startDonationExpiryWorker() {
 function stopDonationExpiryWorker() {
   if (intervalId) {
     clearInterval(intervalId);
+    intervalId = undefined;
   }
 }
 
 module.exports = {
+  expireDonations,
   startDonationExpiryWorker,
   stopDonationExpiryWorker
 };

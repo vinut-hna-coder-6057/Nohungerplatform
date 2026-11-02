@@ -21,9 +21,9 @@ function openDonationPopup() {
  
   details.innerHTML = `
     <b>Role:</b> Donor<br>
-    <b>Location:</b> ${locationValue}<br>
-    <b>Food:</b> ${formData.q1}<br>
-    <b>Quantity:</b> ${formData.q2}<br>
+    <b>Location:</b> ${escapeHtml(locationValue)}<br>
+    <b>Food:</b> ${escapeHtml(formData.q1)}<br>
+    <b>Quantity:</b> ${escapeHtml(formData.q2)}<br>
     <b>Type:</b> ${selectedFoodType || "-"}
   `;
  
@@ -36,10 +36,10 @@ function openDonationConfirmBox() {
   const details = document.getElementById("donorConfirmDetails");
  
   details.innerHTML = `
-    <b>Role:</b> ${role}<br>
-    <b>Location:</b> ${locationValue}<br>
-    <b>Food:</b> ${formData.q1}<br>
-    <b>Quantity:</b> ${formData.q2}<br>
+    <b>Role:</b> ${escapeHtml(role)}<br>
+    <b>Location:</b> ${escapeHtml(locationValue)}<br>
+    <b>Food:</b> ${escapeHtml(formData.q1)}<br>
+    <b>Quantity:</b> ${escapeHtml(formData.q2)}<br>
     <b>Type:</b> ${selectedFoodType || "Not selected"}
   `;
  
@@ -116,10 +116,14 @@ function initImageUpload() {
       const reader = new FileReader();
       reader.onload = function (e) {
         uploadedImageBase64 = e.target.result;
-        imagePreview.innerHTML = `
-          <p style="font-size:13px;color:#eee;">📦 Food Package Preview:</p>
-          <img src="${uploadedImageBase64}">
-        `;
+        imagePreview.textContent = "";
+        const label = document.createElement("p");
+        label.textContent = "📦 Food Package Preview:";
+        label.style.cssText = "font-size:13px;color:#eee;";
+        const preview = document.createElement("img");
+        preview.src = uploadedImageBase64;
+        preview.alt = "Food package preview";
+        imagePreview.append(label, preview);
       };
       reader.readAsDataURL(file);
     };

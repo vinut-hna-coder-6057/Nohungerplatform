@@ -1,7 +1,16 @@
 /* ================= APP ENTRY POINT ================= */
 
-// Initialize socket connection
-var socket = io();
+// Keep the static application usable when the optional Socket.IO server is unavailable.
+var socket = typeof io === "function"
+  ? io({ auth: getSocketAuth() })
+  : {
+      auth: {},
+      connected: false,
+      on() {},
+      emit() {},
+      connect() {},
+      disconnect() {}
+    };
 
 document.addEventListener("DOMContentLoaded", () => {
 

@@ -1,6 +1,11 @@
 const mongoose = require("mongoose");
 
 const notificationSchema = new mongoose.Schema({
+  donationId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Donation",
+    index: true
+  },
   requestId: {
     type: String,
     index: true
