@@ -1,5 +1,27 @@
 # NoHunger pre-push readiness report
 
+## Latest stabilization pass
+
+The current hardening branch adds server-side donor and location authorization,
+generic login failure responses to prevent account enumeration, a database
+readiness endpoint at `/ready`, and an expiry worker that performs an immediate
+pass, honors its configured interval, prevents overlapping runs, and synchronizes
+related notifications. CI now runs the transaction suite explicitly, starts the
+application against its disposable replica set, executes Playwright, and checks
+readiness.
+
+Local validation in this environment completed `npm ci`, 65 syntax checks, 17
+Jest suites with 38 passing tests, the production audit with zero findings, and
+`git diff --check`. The explicit MongoDB suite remains blocked here because the
+Docker daemon is unavailable; its four tests were reported as skipped when no
+`MONGO_TEST_URI` was configured. Browser E2E likewise requires the configured
+server-backed environment. Do not treat either suite as passed until CI or an
+equivalent replica-set environment executes them.
+
+The full audit still reports 19 development-only moderate findings through the
+Jest 30 toolchain. The suggested automatic remediation is a breaking Jest 25
+downgrade and was not applied. Production dependencies remain at zero findings.
+
 **Review date:** 2026-10-20
 **Decision:** NOT READY
 **Repository root:** `Nohungerplatform`

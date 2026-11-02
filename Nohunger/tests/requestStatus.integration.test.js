@@ -6,6 +6,9 @@ const Notification = require("../models/Notification");
 const User = require("../models/User");
 
 const mongoTestUri = process.env.MONGO_TEST_URI;
+if (process.env.REQUIRE_MONGO_TESTS === "true" && !mongoTestUri) {
+  throw new Error("MONGO_TEST_URI is required when REQUIRE_MONGO_TESTS=true");
+}
 const describeWithMongo = mongoTestUri ? describe : describe.skip;
 const jwtSecret = "no-hunger-transaction-tests-only";
 const sessions = [];

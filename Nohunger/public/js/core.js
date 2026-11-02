@@ -23,6 +23,22 @@ function setClick(id, fn) {
   const el = document.getElementById(id);
   if (el) el.onclick = fn;
 }
+function showToast(message, type = "info") {
+  let region = document.getElementById("toastRegion");
+  if (!region) {
+    region = document.createElement("div");
+    region.id = "toastRegion";
+    region.className = "toast-region";
+    region.setAttribute("aria-live", "polite");
+    document.body.appendChild(region);
+  }
+
+  const toast = document.createElement("div");
+  toast.className = `toast toast-${type}`;
+  toast.textContent = message;
+  region.appendChild(toast);
+  window.setTimeout(() => toast.remove(), 4200);
+}
 function showPage(pageId){
 
   document.querySelectorAll(
@@ -30,27 +46,47 @@ function showPage(pageId){
   ).forEach(p => {
     p.classList.remove("active");
   });
+  document.querySelectorAll(".notify-popup").forEach(popup => {
+    popup.style.display = "none";
+  });
 
-  document.querySelector(".hero-container")
-    .classList.add("hidden");
+  const hero = document.querySelector(".hero-container");
+  const landing = document.querySelector(".landing-content");
+  if (hero) hero.classList.add("hidden");
+  if (landing) landing.classList.add("hidden");
 
-  document.getElementById("b1").style.display = "none";
-  document.getElementById("b2").style.display = "none";
+  const impactOne = document.getElementById("b1");
+  const impactTwo = document.getElementById("b2");
+  if (impactOne) impactOne.style.display = "none";
+  if (impactTwo) impactTwo.style.display = "none";
 
-  document.getElementById(pageId)
-    .classList.add("active");
+  const page = document.getElementById(pageId);
+  if (page) page.classList.add("active");
+  if (pageId === "mainDashboard") {
+    const sidebarLocation = document.getElementById("sidebarLocation");
+    const greeting = document.getElementById("dashboardGreeting");
+    if (sidebarLocation) sidebarLocation.textContent = locationValue || "Your city";
+    if (greeting) {
+      const currentRole = role ? role.charAt(0).toUpperCase() + role.slice(1) : "community";
+      greeting.textContent = `${currentRole} workspace`;
+    }
+  }
 }
 function showHome(){
 
    const hero = document.querySelector(".hero-container");
 
-   hero.classList.remove("hidden");
+   if (hero) hero.classList.remove("hidden");
+   const landing = document.querySelector(".landing-content");
+   if (landing) landing.classList.remove("hidden");
 
-   document.querySelectorAll(".page-box")
+   document.querySelectorAll(".page-box, .dashboard-page, .main-dash")
      .forEach(p => p.classList.remove("active"));
 
-   document.getElementById("b1").style.display = "block";
-   document.getElementById("b2").style.display = "block";
+   const impactOne = document.getElementById("b1");
+   const impactTwo = document.getElementById("b2");
+   if (impactOne) impactOne.style.display = "block";
+   if (impactTwo) impactTwo.style.display = "block";
 }
 function append(msg) {
   const out = document.getElementById("chatOutput");
@@ -144,7 +180,7 @@ function initParticles() {
   for (let i = 0; i < 35; i++) {
     let p = document.createElement("div");
     p.className = "particle";
-    p.style.left = Math.random() * 100 + "vw";
+    p.style.left = Math.random() * 94 + "vw";
     p.style.animationDuration = (18 + Math.random() * 20) + "s";
     document.body.appendChild(p);
   }

@@ -156,7 +156,7 @@ function initLocationPage() {
 /* ================= ROLE SELECTION ================= */
 function initRoleSelection() {
   document.querySelectorAll(".dash-card").forEach(card => {
-    card.onclick = async () => {
+    const selectRole = async () => {
       if (!locationValue) {
         alert("Select location first");
         return;
@@ -199,6 +199,13 @@ function initRoleSelection() {
 
       const t = document.getElementById("dashRoleTitle");
       if (t) t.textContent = role.toUpperCase() + " Dashboard";
+    };
+    card.onclick = selectRole;
+    card.onkeydown = event => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        selectRole();
+      }
     };
   });
 }
