@@ -1,6 +1,8 @@
 const Donation = require("../models/Donation");
+const Notification = require("../models/Notification");
 
 let intervalId;
+let expiryInProgress = false;
 
 async function expireDonations() {
   const now = new Date();
@@ -13,18 +15,50 @@ async function expireDonations() {
       $set: { status: "expired" }
     }
   );
+  const expiredIds = result.modifiedCount || result.nModified || 0;
+  if (expiredIds > 0) {
+    const expiredDonations = await Donation.find({
+      status: "expired",
+      expiryTime: { $lte: now }
+    }).select("requestId");
+    const requestIds = expiredDonations.map(donation => donation.requestId).filter(Boolean);
+    if (requestIds.length) {
+      await Notification.updateMany(
+        {
+          requestId: { $in: requestIds },
+          status: { $nin: ["completed", "declined", "expired"] }
+        },
+        {
+          $set: { status: "expired", requestState: "expired" },
+          $push: { history: { status: "expired", at: now } }
+        }
+      );
+    }
+  }
   return result;
 }
 
 function startDonationExpiryWorker(intervalMs = 60000) {
   if (intervalId) return;
-  intervalId = setInterval(async () => {
+  const delay = Number(intervalMs);
+  if (!Number.isFinite(delay) || delay <= 0) {
+    throw new Error("Expiry worker interval must be a positive number");
+  }
+  const run = async () => {
+    if (expiryInProgress) return;
+    expiryInProgress = true;
     try {
       await expireDonations();
     } catch (err) {
       console.error("Expiry worker error:", err);
+    } finally {
+      expiryInProgress = false;
     }
-  }, 60000);
+  };
+  void run();
+  intervalId = setInterval(async () => {
+    await run();
+  }, delay);
 }
 
 function stopDonationExpiryWorker() {
@@ -32,6 +66,7 @@ function stopDonationExpiryWorker() {
     clearInterval(intervalId);
     intervalId = undefined;
   }
+  expiryInProgress = false;
 }
 
 module.exports = {

@@ -4,7 +4,8 @@ async function loadAdmin() {
   const usersDiv = document.getElementById("adminUsers");
   const donationDiv = document.getElementById("adminDonations");
  
-  statsDiv.innerHTML = "Loading...";
+  statsDiv.classList.add("loading-state");
+  statsDiv.innerHTML = "Loading dashboard data";
  
   try {
     /* ================= STATS ================= */
@@ -12,6 +13,7 @@ async function loadAdmin() {
       headers: getAuthHeaders({ json: false })
     });
     const stats = await s.json();
+    statsDiv.classList.remove("loading-state");
  
     statsDiv.innerHTML = `
       <h3>📊 System Stats</h3>
@@ -106,7 +108,10 @@ async function loadAdmin() {
     });
  
   } catch (err) {
-    statsDiv.innerHTML = "Error loading admin";
+    statsDiv.classList.remove("loading-state");
+    statsDiv.classList.add("error-state");
+    statsDiv.innerHTML = "Admin data could not be loaded";
+    showToast("Admin data could not be loaded", "error");
    
   }
 }

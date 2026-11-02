@@ -97,9 +97,9 @@ exports.login = async (req, res) => {
     const user = await User.findOne({ email: normalizedEmail });
 
     if (!user || !user.password) {
-  return res.status(404).json({
+  return res.status(401).json({
     success: false,
-    message: "User not found"
+    message: "Invalid email or password"
   });
 }
 
@@ -107,7 +107,7 @@ exports.login = async (req, res) => {
     if (!isMatch) {
   return res.status(401).json({
     success: false,
-    message: "Incorrect password"
+    message: "Invalid email or password"
   });
 }
 

@@ -13,4 +13,13 @@ describe("Health Endpoint", () => {
 
   });
 
+  test("GET /ready reports unavailable dependencies", async () => {
+    const res = await request(app).get("/ready");
+
+    expect(res.statusCode).toBe(503);
+    expect(res.body).toEqual({
+      status: "NOT_READY",
+      database: "disconnected"
+    });
+  });
 });

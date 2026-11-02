@@ -190,6 +190,7 @@ window.updateRequest = async function (requestId, status) {
     const data = await res.json();
 
     if (data.success) {
+      showToast("Request status updated", "success");
     
       if (status === "received") {
         openMealPopup();
@@ -240,11 +241,13 @@ window.updateRequest = async function (requestId, status) {
       }, 200);
 
     } else {
+      showToast("Request status could not be updated", "error");
       alert("Update failed");
     }
 
   } catch (err) {
     console.error(err);
+    showToast("Server error while updating request", "error");
     alert("Server error");
   }
 };
@@ -267,7 +270,8 @@ function initBellNotifications() {
     notifyPopup.style.display =
       notifyPopup.style.display === "block" ? "none" : "block";
 
-    notifyContent.innerHTML = "Loading...";
+    notifyContent.className = "panel-state loading-state";
+    notifyContent.innerHTML = "Loading notifications";
 
     try {
       const res = await fetch(`${API}/api/notifications/${role}/${locationValue}`, {
@@ -276,14 +280,17 @@ function initBellNotifications() {
       const data = await res.json();
 
       if (!data.length) {
-        notifyContent.innerHTML = "No notifications";
+        notifyContent.className = "panel-state empty-state";
+        notifyContent.innerHTML = "No notifications yet";
         return;
       }
 
       renderNotificationList(data, notifyContent);
 
     } catch {
-      notifyContent.innerHTML = "Error";
+      notifyContent.className = "panel-state error-state";
+      notifyContent.innerHTML = "Notifications could not be loaded";
+      showToast("Notifications could not be loaded", "error");
     }
   });
 }

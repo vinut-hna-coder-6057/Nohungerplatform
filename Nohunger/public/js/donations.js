@@ -79,10 +79,12 @@ function createRequest() {
 
   if (!data.success) {
     append(`❌ ${data.message || "Failed to send request"}`);
+    showToast(data.message || "Request could not be sent", "error");
     return;
   }
 
   append("✅ Request sent successfully!");
+  showToast("Request sent successfully", "success");
 
   uploadedImageBase64 = "";
   document.getElementById("imagePreview").innerHTML = "";
@@ -90,6 +92,7 @@ function createRequest() {
 .catch((err) => {
   console.error(err);
   append("❌ Failed to send request");
+  showToast("Request could not be sent", "error");
 });
 }
 /* ================= IMAGE UPLOAD ================= */

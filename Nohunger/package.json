@@ -7,6 +7,7 @@
     "start": "node server.js",
     "dev": "node --watch server.js",
     "test": "jest --runInBand --testPathIgnorePatterns=tests/e2e",
+    "test:integration": "jest --runInBand tests/requestStatus.integration.test.js",
     "check": "npm run check:syntax",
     "check:syntax": "node scripts/check-js-syntax.js",
     "test:e2e": "playwright test"

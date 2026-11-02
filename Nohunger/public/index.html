@@ -19,6 +19,7 @@
 <!-- ===== Bottom of <body>, before </body> ===== -->
 
 <body>
+<a class="skip-link" href="#main-content">Skip to content</a>
 <div id="themeToggle">🌙</div>
 
 <!-- impact boxes -->
@@ -30,27 +31,67 @@
 <strong>3,920+</strong>People Served
 </div>
 
+<header class="site-header">
+  <a class="brand" href="#" onclick="showHome(); return false;" aria-label="NoHunger home">
+    <span class="brand-mark" aria-hidden="true">N</span><span>NoHunger</span>
+  </a>
+  <nav class="site-nav" aria-label="Primary navigation">
+    <a href="#how-it-works">How it works</a>
+    <a href="#trust">Our promise</a>
+    <button class="nav-cta" onclick="showPage('loginPage')">Sign in</button>
+  </nav>
+</header>
+
 <div class="hero-container">
 
 <div class="left">
-<div class="title">No Hunger</div>
+<p class="eyebrow">Food rescue, made human</p>
+<h1 class="title">Good food belongs<br><span>on a table.</span></h1>
 
-<div class="subtitle">
-Bridging hearts through food.  
-Connecting donors, NGOs and people  
-so no one sleeps hungry.
-</div>
+<p class="subtitle">NoHunger connects surplus food with people and organisations who can put it to work — quickly, locally and with dignity.</p>
 
 <button class="start-btn" onclick="showPage('loginPage')">
-Get Started →
+  Get started <span aria-hidden="true">→</span>
 </button>
+<a class="text-link hero-link" href="#how-it-works">See how it works</a>
 </div>
 
 <div class="right">
-<div class="glow"></div>
+<div class="hero-visual">
+  <div class="hero-image-wrap">
+    <img src="images/hero.png" alt="Fresh food prepared for sharing">
+  </div>
+  <div class="hero-note hero-note-top"><strong>Local impact</strong><span>Every meal finds a neighbour.</span></div>
+  <div class="hero-note hero-note-bottom"><span class="status-dot"></span><strong>Community active</strong></div>
+</div>
 </div>
 
 </div>
+
+<main id="main-content" class="landing-content">
+  <section id="how-it-works" class="landing-section">
+    <div class="section-heading">
+      <p class="eyebrow">A simple chain of care</p>
+      <h2>From surplus to shared.</h2>
+      <p>One trusted place for donors, receivers and NGOs to coordinate the next good meal.</p>
+    </div>
+    <div class="steps-grid">
+      <article class="step-card"><span class="step-number">01</span><h3>Share what you can</h3><p>Donors publish food details, location and availability in a few clear steps.</p></article>
+      <article class="step-card"><span class="step-number">02</span><h3>Find it nearby</h3><p>Receivers and NGOs discover available donations in their community.</p></article>
+      <article class="step-card"><span class="step-number">03</span><h3>Move it forward</h3><p>Requests, pickup and delivery updates stay visible until food reaches its destination.</p></article>
+    </div>
+  </section>
+  <section class="impact-section" aria-label="Platform impact">
+    <div><strong>12k+</strong><span>meals shared</span></div>
+    <div><strong>3.9k+</strong><span>people supported</span></div>
+    <div><strong>145+</strong><span>community partners</span></div>
+    <div><strong>18</strong><span>cities connected</span></div>
+  </section>
+  <section id="trust" class="trust-section">
+    <div><p class="eyebrow">Built for trust</p><h2>Every handoff has a story.</h2></div>
+    <p>Clear statuses, role-based access and real-time updates help communities coordinate with confidence.</p>
+  </section>
+</main>
 
 
 
@@ -60,10 +101,12 @@ Get Started →
 
   <h1>Login</h1>
 
+  <label class="field-label" for="loginEmail">Email address</label>
   <div class="input-field">
     <input id="loginEmail" type="email" placeholder="Enter Email" required>
   </div>
 
+  <label class="field-label" for="loginPassword">Password</label>
   <div class="input-field">
     <input id="loginPassword" type="password" placeholder="Enter Password" required>
   </div>
@@ -73,11 +116,11 @@ Get Started →
   <!-- Register Link -->
   <p style="margin-top:15px;font-size:14px;">
     Don’t have an account?
-    <span 
+    <button class="text-link inline-link"
       onclick="showPage('registerPage')" 
-      style="color:#008080;font-weight:600;cursor:pointer;">
+      type="button">
       Register here
-    </span>
+    </button>
   </p>
 
   <!-- Back to Home -->
@@ -96,14 +139,17 @@ Get Started →
 
   <h1>Create Account</h1>
 
+  <label class="field-label" for="registerName">Full name</label>
   <div class="input-field">
     <input id="registerName" type="text" placeholder="Full Name" required>
   </div>
 
+  <label class="field-label" for="registerEmail">Email address</label>
   <div class="input-field">
     <input id="registerEmail" type="email" placeholder="Email Address" required>
   </div>
 
+  <label class="field-label" for="registerPassword">Password</label>
   <div class="input-field">
     <input id="registerPassword" type="password" placeholder="Create Password" required>
   </div>
@@ -113,11 +159,11 @@ Get Started →
   <!-- Back to Login -->
   <p style="margin-top:15px;font-size:14px;">
     Already have an account?
-    <span 
+    <button class="text-link inline-link"
       onclick="showPage('loginPage')" 
-      style="color:#008080;font-weight:600;cursor:pointer;">
+      type="button">
       Login here
-    </span>
+    </button>
   </p>
 
   <!-- Back Button -->
@@ -130,9 +176,18 @@ Get Started →
 
 </div>
 <!-- ADMIN PANEL -->
-<div id="adminPage" class="main-dash" style="flex-direction:column;padding:30px;overflow:auto;">
-  <h1 style="text-align:center;margin-bottom:25px;">🛡 Admin Dashboard</h1>
-<button onclick="openAnalytics()" 
+<div id="adminPage" class="main-dash admin-shell" style="flex-direction:column;padding:30px;overflow:auto;">
+  <header class="admin-header">
+    <div>
+      <p class="eyebrow">Operations console</p>
+      <h1>Admin Dashboard</h1>
+    </div>
+    <div class="admin-header-actions">
+      <button class="secondary-action" onclick="openAnalytics()">View analytics</button>
+      <button class="danger-action" onclick="location.reload()">Logout</button>
+    </div>
+  </header>
+<button class="legacy-analytics-button" onclick="openAnalytics()"
 style="
 background:#008080;
 width:220px;
@@ -232,22 +287,22 @@ Close
 </div>
 </div>
 
-  <div id="adminStats" 
+  <div id="adminStats" class="admin-stats"
        style="display:flex;gap:20px;flex-wrap:wrap;justify-content:center;margin-bottom:30px;">
   </div>
 
   <!-- USERS + DONATIONS -->
-  <div style="display:flex;gap:30px;align-items:flex-start;">
+  <div class="admin-columns" style="display:flex;gap:30px;align-items:flex-start;">
 
     <!-- USERS -->
-    <div style="flex:1;background:#fff;padding:20px;border-radius:12px;color:#222;
+    <div class="admin-panel" style="flex:1;background:#fff;padding:20px;border-radius:12px;color:#222;
                 max-height:500px;overflow-y:auto;">
       <h2>👥 All Users</h2>
       <div id="adminUsers"></div>
     </div>
 
     <!-- DONATIONS -->
-    <div style="flex:1;background:#fff;padding:20px;border-radius:12px;color:#222;
+    <div class="admin-panel" style="flex:1;background:#fff;padding:20px;border-radius:12px;color:#222;
                 max-height:500px;overflow-y:auto;">
       <h2>🍱 All Donations</h2>
       <div id="adminDonations"></div>
@@ -255,7 +310,7 @@ Close
 
   </div>
 
-  <button onclick="location.reload()" 
+  <button class="admin-logout" onclick="location.reload()"
           style="margin-top:30px;background:red;width:200px;align-self:center;">
     Logout
   </button>
@@ -285,20 +340,20 @@ Close
   <h1 class="dash-title">Select Your Role</h1>
 
   <div class="dash-row">
-      <div class="dash-card donor" data-role="donor">
-          🍱 Donor
+      <div class="dash-card donor" data-role="donor" role="button" tabindex="0" aria-label="Choose donor role">
+          <span class="role-icon" aria-hidden="true">D</span> Donor
           <p>Donate food to help people</p>
       </div>
 
-      <div class="dash-card receiver" data-role="receiver">
-          🤝 Receiver
+      <div class="dash-card receiver" data-role="receiver" role="button" tabindex="0" aria-label="Choose receiver role">
+          <span class="role-icon" aria-hidden="true">R</span> Receiver
           <p>Request food if needed</p>
       </div>
   </div>
 
   <div class="dash-row center">
-      <div class="dash-card ngo" data-role="ngo">
-          👐 NGO
+      <div class="dash-card ngo" data-role="ngo" role="button" tabindex="0" aria-label="Choose NGO role">
+          <span class="role-icon" aria-hidden="true">N</span> NGO
           <p>Distribute & manage donations</p>
       </div>
   </div>
@@ -310,12 +365,28 @@ Close
 <!-- MAIN DASHBOARD AFTER ROLE -->
 <div id="mainDashboard" class="main-dash">
 
+  <aside class="app-sidebar" aria-label="Application navigation">
+    <a class="sidebar-brand" href="#" onclick="showHome(); return false;">
+      <span class="brand-mark" aria-hidden="true">N</span>
+      <span>NoHunger</span>
+    </a>
+    <p class="sidebar-label">Workspace</p>
+    <button class="sidebar-link active" type="button" onclick="showPage('mainDashboard')">Overview</button>
+    <button class="sidebar-link" type="button" onclick="document.getElementById('openChatbotCard').click()">Create or request food</button>
+    <button class="sidebar-link" type="button" onclick="document.getElementById('bellBtn').click()">Notifications</button>
+    <button class="sidebar-link" type="button" onclick="document.getElementById('myActivityBtn').click()">Activity</button>
+    <div class="sidebar-footer">
+      <span class="sidebar-location">📍 <span id="sidebarLocation"></span></span>
+      <button class="sidebar-link sidebar-logout" type="button" onclick="document.getElementById('logoutBtn2').click()">Log out</button>
+    </div>
+  </aside>
+
   <div class="topbar">
       <div class="logo">🍲 No Hunger</div>
       <div class="role-title" id="dashRoleTitle">Dashboard</div>
 
       <div class="top-actions">
-        <div id="bellBtn" style="position:relative;cursor:pointer;">
+        <button id="bellBtn" class="icon-button" type="button" aria-label="Notifications" style="position:relative;cursor:pointer;">
   🔔
   <span id="notifBadge"
         style="
@@ -337,14 +408,20 @@ Close
         ">
     0
   </span>
-</div>
+</button>
 
-        <div id="profileBtn" style="font-size:22px;cursor:pointer;">👤</div>
+        <button id="profileBtn" class="icon-button" type="button" aria-label="Profile" style="font-size:22px;cursor:pointer;">👤</button>
         <button id="logoutBtn2">Logout</button>
       </div>
   </div>
 
 
+  <div class="dashboard-content">
+    <div class="dashboard-intro">
+      <p class="eyebrow">Your workspace</p>
+      <h1 id="dashboardGreeting">Ready to make an impact?</h1>
+      <p>Keep requests, handoffs and updates moving from one clear workspace.</p>
+    </div>
   <div class="dash-center">
 
       <div class="big-card chatbot-card" id="openChatbotCard">
@@ -359,6 +436,7 @@ Close
       
 
 
+  </div>
   </div>
 
 </div>

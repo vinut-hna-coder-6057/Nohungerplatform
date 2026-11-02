@@ -65,7 +65,8 @@ const notificationSchema = new mongoose.Schema({
       "picked_up",
       "on_the_way",
       "reached",
-      "completed"
+      "completed",
+      "expired"
     ],
     default: "receiver_deciding"
   },
