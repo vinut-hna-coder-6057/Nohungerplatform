@@ -111,23 +111,23 @@ exports.getNotifications = async (req, res) => {
     const location = req.params.location.toLowerCase();
     const email = req.user.email;
 
-const user = await User.findOne({
-  email: email.toLowerCase().trim()
-});
+    const user = await User.findOne({
+      email: email.toLowerCase().trim()
+    });
 
-if (!user || !user.role || !user.location) {
-  return res.json([]);
-}
+    if (!user || !user.role || !user.location) {
+      return res.json([]);
+    }
 
-const dbRole = user.role.toLowerCase();
-const dbLocation = user.location.toLowerCase();
+    const dbRole = user.role.toLowerCase();
+    const dbLocation = user.location.toLowerCase();
 
-if (dbRole !== role || dbLocation !== location) {
-  return res.status(403).json({
-    success: false,
-    message: "Forbidden"
-  });
-}
+    if (dbRole !== role || dbLocation !== location) {
+      return res.status(403).json({
+        success: false,
+        message: "Forbidden"
+      });
+    }
 
     const data = await Notification.aggregate([
       {
@@ -150,11 +150,13 @@ if (dbRole !== role || dbLocation !== location) {
       }
     ]);
 
-    res.json(data);
-
+    return res.json(data);
   } catch (err) {
-    console.error("Fetch notifications error:", err.message);
-    res.json([]);
+    console.error("Fetch notifications error:", err.name, err.code || "unknown");
+    return res.status(500).json({
+      success: false,
+      message: "Unable to fetch notifications"
+    });
   }
 };
 exports.saveReceiverLocation = async (req, res) => {

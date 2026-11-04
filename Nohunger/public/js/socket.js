@@ -37,6 +37,7 @@ function initSocketEvents() {
 
   /* ================= NEW NOTIFICATION ================= */
   socket.on("newNotification", async (data) => {
+    notificationUpdateVersion++;
     const badge = document.getElementById("notifBadge");
 
     notificationCount++;

@@ -121,8 +121,11 @@ exports.getProfile = async (req, res) => {
     });
 
   } catch (err) {
-    console.error("❌ PROFILE ERROR:", err);
-    res.json({ success: false });
+    console.error("Profile retrieval error:", err.name, err.code || "unknown");
+    res.status(500).json({
+      success: false,
+      message: "Unable to fetch profile"
+    });
   }
 };
 exports.getMyActivity = async (req, res) => {
@@ -145,8 +148,11 @@ exports.getMyActivity = async (req, res) => {
     res.json(data);
 
   } catch (err) {
-    console.error("Activity error:", err);
-    res.json([]);
+    console.error("Activity retrieval error:", err.name, err.code || "unknown");
+    res.status(500).json({
+      success: false,
+      message: "Unable to fetch activity"
+    });
   }
 };
 exports.getLeaderboard = async (req, res) => {
@@ -164,7 +170,10 @@ exports.getLeaderboard = async (req, res) => {
     res.json(data);
 
   } catch (err) {
-    console.error("Leaderboard error:", err);
-    res.json([]);
+    console.error("Leaderboard retrieval error:", err.name, err.code || "unknown");
+    res.status(500).json({
+      success: false,
+      message: "Unable to fetch leaderboard"
+    });
   }
 };

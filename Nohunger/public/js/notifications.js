@@ -1,14 +1,23 @@
 /* ================= NOTIFICATIONS ================= */
 
+var notificationUpdateVersion = 0;
+
 function renderNotificationList(list, notifyContent) {
   const currentEmail = sessionStorage.getItem("userEmail");
+  const visibleNotifications = list
+    .filter(n => n.senderEmail !== currentEmail)
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  if (!visibleNotifications.length) {
+    notifyContent.className = "panel-state empty-state";
+    notifyContent.textContent = "No notifications yet";
+    return;
+  }
+
+  notifyContent.className = "";
   notifyContent.innerHTML = "";
 
-  list
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-    .forEach(n => {
-      if (n.senderEmail === currentEmail) return;
-
+  visibleNotifications.forEach(n => {
       notifyContent.innerHTML += `
         <div class="request-box">
           <p><b>👤 ${escapeHtml(n.senderEmail || "Unknown User")}</b></p>
@@ -123,21 +132,40 @@ function renderNotificationList(list, notifyContent) {
             : ""}
         </div>
       `;
-    });
+  });
 }
 
 async function refreshNotificationContent(notifyContent) {
+  const updateVersion = notificationUpdateVersion;
   try {
     const res = await fetch(`${API}/api/notifications/${role}/${locationValue}`, {
       headers: getAuthHeaders({ json: false })
     });
-    const list = await res.json();
-    list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
+    if (!res.ok) {
+      throw new Error(`Notification fetch failed (${res.status})`);
+    }
+
+    const list = await res.json();
+    if (!Array.isArray(list)) {
+      throw new Error("Notification payload was invalid");
+    }
+    if (updateVersion !== notificationUpdateVersion) return;
+
+    list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    const visibleNotifications = list.filter(n => n.senderEmail !== sessionStorage.getItem("userEmail") &&
+      !(role === "receiver" && n.fromRole === "donor" && n.status !== "created"));
+    if (!visibleNotifications.length) {
+      notifyContent.className = "panel-state empty-state";
+      notifyContent.textContent = "No notifications yet";
+      return;
+    }
+
+    notifyContent.className = "";
     notifyContent.innerHTML = "";
     const currentEmail = sessionStorage.getItem("userEmail");
 
-    list.forEach(n => {
+    visibleNotifications.forEach(n => {
       if (n.senderEmail === currentEmail) return;
 
       if (
@@ -175,7 +203,12 @@ async function refreshNotificationContent(notifyContent) {
       `;
     });
   } catch (err) {
-    console.error("Refresh failed");
+    console.error("Refresh failed", err);
+    if (!notifyContent.children.length) {
+      notifyContent.className = "panel-state error-state";
+      notifyContent.textContent = "Notifications could not be loaded";
+    }
+    showToast("Notifications could not be loaded", "error");
   }
 }
 
@@ -277,15 +310,24 @@ function initBellNotifications() {
       const res = await fetch(`${API}/api/notifications/${role}/${locationValue}`, {
         headers: getAuthHeaders({ json: false })
       });
-      const data = await res.json();
 
-      if (!data.length) {
+      if (!res.ok) {
+        throw new Error(`Notifications request failed (${res.status})`);
+      }
+
+      const data = await res.json();
+      if (!Array.isArray(data)) {
+        throw new Error("Notification payload was invalid");
+      }
+      const list = data;
+
+      if (!list.length) {
         notifyContent.className = "panel-state empty-state";
         notifyContent.innerHTML = "No notifications yet";
         return;
       }
 
-      renderNotificationList(data, notifyContent);
+      renderNotificationList(list, notifyContent);
 
     } catch {
       notifyContent.className = "panel-state error-state";

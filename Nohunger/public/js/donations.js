@@ -257,7 +257,11 @@ function initLeaderboard() {
     try {
       const res = await fetch(`${API}/api/leaderboard`);
       const data = await res.json();
- 
+
+      if (!res.ok || !Array.isArray(data)) {
+        throw new Error("Leaderboard request failed");
+      }
+
       if (chatOutput) chatOutput.innerHTML = "";
  
       if (!data.length) {

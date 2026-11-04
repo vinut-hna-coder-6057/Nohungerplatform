@@ -9,28 +9,44 @@ async function authMiddleware(req, res, next) {
     return res.status(401).json({ success: false, message: "Unauthorized" });
   }
 
+  const token = authHeader.slice(7);
+  let decoded;
   try {
-    const token = authHeader.slice(7);
-    const decoded = verifyToken(token);
-    if (!decoded.email || typeof decoded.email !== "string") {
-      throw new Error("Token subject is missing");
-    }
-    if (isTokenRevoked(decoded.jti)) throw new Error("Token revoked");
-    if (!decoded.isAdmin) {
-      if (!Number.isInteger(decoded.tokenVersion)) throw new Error("Token version missing");
-      const user = await User.findOne({ email: decoded.email.toLowerCase().trim() })
-        .select("tokenVersion disabled");
-      if (!user || user.disabled ||
-          (Number.isInteger(decoded.tokenVersion) && decoded.tokenVersion !== user.tokenVersion)) {
-        throw new Error("Account unavailable");
-      }
-    }
-    req.authToken = token;
-    req.user = decoded;
-    next();
-  } catch (err) {
+    decoded = verifyToken(token);
+  } catch {
     return res.status(401).json({ success: false, message: "Invalid or expired token" });
   }
+
+  if (!decoded.email || typeof decoded.email !== "string" ||
+      isTokenRevoked(decoded.jti)) {
+    return res.status(401).json({ success: false, message: "Invalid or expired token" });
+  }
+
+  if (!decoded.isAdmin) {
+    if (!Number.isInteger(decoded.tokenVersion)) {
+      return res.status(401).json({ success: false, message: "Invalid or expired token" });
+    }
+
+    let user;
+    try {
+      user = await User.findOne({ email: decoded.email.toLowerCase().trim() })
+        .select("tokenVersion disabled");
+    } catch (err) {
+      console.error("Authentication account lookup failed:", err.name, err.code || "unknown");
+      return res.status(503).json({
+        success: false,
+        message: "Authentication temporarily unavailable"
+      });
+    }
+
+    if (!user || user.disabled || decoded.tokenVersion !== user.tokenVersion) {
+      return res.status(401).json({ success: false, message: "Invalid or expired token" });
+    }
+  }
+
+  req.authToken = token;
+  req.user = decoded;
+  next();
 }
 
 function adminMiddleware(req, res, next) {
