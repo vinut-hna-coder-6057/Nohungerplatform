@@ -27,10 +27,10 @@ let receiverToken;
 let ngoToken;
 let requestId;
 
-const png = Buffer.from([
-  137, 80, 78, 71, 13, 10, 26, 10,
-  0, 0, 0, 0, 73, 69, 78, 68
-]);
+const png = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAADElEQVQImWNgaPgPAAIDAYBxfNghAAAAAElFTkSuQmCC",
+  "base64"
+);
 
 async function registerAndLogin(request, user) {
   expect((await request.post("/api/register", { data: user })).status()).toBe(200);
@@ -54,6 +54,107 @@ async function assignRole(request, token, role) {
     location
   });
   expect(response.status()).toBe(200);
+}
+
+function waitForSocketConnection(socket) {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const timer = setTimeout(() => finish(new Error("Socket.IO connection timed out")), 5000);
+    const cleanup = () => {
+      clearTimeout(timer);
+      socket.off("connect", onConnect);
+      socket.off("connect_error", onError);
+      socket.off("error", onError);
+    };
+    const finish = error => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      if (error) reject(error);
+      else resolve();
+    };
+    const onConnect = () => finish();
+    const onError = error => finish(error);
+
+    socket.once("connect", onConnect);
+    socket.once("connect_error", onError);
+    socket.once("error", onError);
+  });
+}
+
+function waitForServerDisconnect(socket) {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const timer = setTimeout(() => finish(new Error("Socket.IO logout disconnect timed out")), 5000);
+    const cleanup = () => {
+      clearTimeout(timer);
+      socket.off("disconnect", onDisconnect);
+      socket.off("connect_error", onError);
+      socket.off("error", onError);
+    };
+    const finish = error => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      if (error) reject(error);
+      else resolve();
+    };
+    const onDisconnect = reason => {
+      if (reason !== "io server disconnect") {
+        finish(new Error(`Unexpected Socket.IO disconnect: ${reason}`));
+        return;
+      }
+      finish();
+    };
+    const onError = error => finish(error);
+
+    socket.once("disconnect", onDisconnect);
+    socket.once("connect_error", onError);
+    socket.once("error", onError);
+  });
+}
+
+function expectUnauthorizedSocketRejection(token) {
+  const socket = io(process.env.E2E_BASE_URL, {
+    auth: { token },
+    reconnection: false,
+    timeout: 5000
+  });
+
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const timer = setTimeout(
+      () => finish(new Error("Socket.IO did not reject the revoked token before timeout")),
+      5000
+    );
+    const cleanup = () => {
+      clearTimeout(timer);
+      socket.off("connect", onConnect);
+      socket.off("connect_error", onConnectError);
+      socket.off("error", onError);
+      socket.close();
+    };
+    const finish = error => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      if (error) reject(error);
+      else resolve();
+    };
+    const onConnect = () => finish(new Error("Revoked token established a Socket.IO connection"));
+    const onConnectError = error => {
+      if (!/^unauthorized$/i.test(error.message)) {
+        finish(new Error(`Unexpected Socket.IO connection error: ${error.message}`));
+        return;
+      }
+      finish();
+    };
+    const onError = error => finish(error);
+
+    socket.once("connect", onConnect);
+    socket.once("connect_error", onConnectError);
+    socket.once("error", onError);
+  });
 }
 
 test("NGO registration, login, and delivery workflow", async ({ request }) => {
@@ -227,34 +328,42 @@ test("logout revokes REST and Socket.IO access", async ({ request }) => {
     email: `logout-${suffix}@example.test`,
     password
   });
-  const logout = await api(request, token, "post", "/api/logout", {});
-  expect(logout.status()).toBe(200);
-  const protectedResponse = await api(
+  const authorizedResponse = await api(
     request,
     token,
     "get",
     `/api/profile/logout-${suffix}@example.test`
   );
-  expect(protectedResponse.status()).toBe(401);
+  expect(authorizedResponse.status()).toBe(200);
 
-  await new Promise(resolve => {
-    const socket = io(process.env.E2E_BASE_URL, {
-      auth: { token },
-      reconnection: false
-    });
-    const finish = () => {
-      socket.close();
-      resolve();
-    };
-    socket.on("connect", () => {
-      throw new Error("Revoked token established a Socket.IO connection");
-    });
-    socket.on("connect_error", error => {
-      expect(error.message).toMatch(/unauthorized/i);
-      finish();
-    });
-    setTimeout(() => {
-      finish();
-    }, 5000);
+  const activeSocket = io(process.env.E2E_BASE_URL, {
+    auth: { token },
+    reconnection: false,
+    timeout: 5000
   });
+  try {
+    await waitForSocketConnection(activeSocket);
+    const disconnection = waitForServerDisconnect(activeSocket);
+
+    try {
+      const logout = await api(request, token, "post", "/api/logout", {});
+      expect(logout.status()).toBe(200);
+      await disconnection;
+    } catch (error) {
+      await disconnection.catch(() => {});
+      throw error;
+    }
+
+    const protectedResponse = await api(
+      request,
+      token,
+      "get",
+      `/api/profile/logout-${suffix}@example.test`
+    );
+    expect(protectedResponse.status()).toBe(401);
+    await expectUnauthorizedSocketRejection(token);
+  } finally {
+    activeSocket.removeAllListeners();
+    activeSocket.close();
+  }
 });

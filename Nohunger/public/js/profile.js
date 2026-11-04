@@ -46,7 +46,11 @@ function initProfileBtn() {
         headers: getAuthHeaders({ json: false })
       });
       const data = await res.json();
- 
+
+      if (!res.ok) {
+        content.innerHTML = "Error loading profile";
+        return;
+      }
       if (!data.success) {
         content.innerHTML = "Profile not found";
         return;
@@ -116,6 +120,11 @@ function initActivityPage() {
         headers: getAuthHeaders({ json: false })
       });
       const data = await res.json();
+
+      if (!res.ok || !Array.isArray(data)) {
+        out.innerHTML = "Error loading";
+        return;
+      }
  
       out.innerHTML = "";
  

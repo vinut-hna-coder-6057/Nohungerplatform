@@ -1,4 +1,16 @@
 
+async function fetchAdminJson(url, options = {}) {
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      ...getAuthHeaders({ json: false }),
+      ...(options.headers || {})
+    }
+  });
+  if (!response.ok) throw new Error("Admin data request failed");
+  return response.json();
+}
+
 async function loadAdmin() {
   const statsDiv = document.getElementById("adminStats");
   const usersDiv = document.getElementById("adminUsers");
@@ -9,10 +21,7 @@ async function loadAdmin() {
  
   try {
     /* ================= STATS ================= */
-    const s = await fetch(`${API}/api/admin/stats`, {
-      headers: getAuthHeaders({ json: false })
-    });
-    const stats = await s.json();
+    const stats = await fetchAdminJson(`${API}/api/admin/stats`);
     statsDiv.classList.remove("loading-state");
  
     statsDiv.innerHTML = `
@@ -24,10 +33,7 @@ async function loadAdmin() {
     `;
  
     /* ================= USERS ================= */
-    const u = await fetch(`${API}/api/admin/users`, {
-      headers: getAuthHeaders({ json: false })
-    });
-    const users = await u.json();
+    const users = await fetchAdminJson(`${API}/api/admin/users`);
  
     usersDiv.innerHTML = "";
  
@@ -73,10 +79,7 @@ async function loadAdmin() {
     });
  
     /* ================= DONATIONS ================= */
-    const d = await fetch(`${API}/api/admin/donations`, {
-      headers: getAuthHeaders({ json: false })
-    });
-    const dons = await d.json();
+    const dons = await fetchAdminJson(`${API}/api/admin/donations`);
  
     donationDiv.innerHTML = "";
  
@@ -122,12 +125,9 @@ window.deleteUser = async function (id) {
   if (!confirm("Delete this user?")) return;
  
   try {
-    const res = await fetch(`${API}/api/admin/delete-user/${id}`, {
-      method: "DELETE",
-      headers: getAuthHeaders({ json: false })
+    const data = await fetchAdminJson(`${API}/api/admin/delete-user/${id}`, {
+      method: "DELETE"
     });
- 
-    const data = await res.json();
  
     if (data.success) {
       alert("User deleted successfully");
@@ -156,10 +156,7 @@ window.openUserPopup = async function (id) {
   content.innerHTML = "Loading user...";
  
   try {
-    const res = await fetch(`${API}/api/admin/users`, {
-      headers: getAuthHeaders({ json: false })
-    });
-    const users = await res.json();
+    const users = await fetchAdminJson(`${API}/api/admin/users`);
     const u = users.find(x => x._id === id);
  
     if (!u) {
@@ -204,10 +201,7 @@ window.openAnalytics = async function () {
   popup.style.display = "flex";
  
   try {
-    const res = await fetch(`${API}/api/admin/stats`, {
-      headers: getAuthHeaders({ json: false })
-    });
-    const stats = await res.json();
+    const stats = await fetchAdminJson(`${API}/api/admin/stats`);
  
     const ctx = document.getElementById("mainChart").getContext("2d");
  
@@ -229,10 +223,7 @@ window.openAnalytics = async function () {
       }
     });
  
-    const dres = await fetch(`${API}/api/admin/donations`, {
-      headers: getAuthHeaders({ json: false })
-    });
-    const donations = await dres.json();
+    const donations = await fetchAdminJson(`${API}/api/admin/donations`);
  
     let available = 0, expired = 0;
     donations.forEach(d => {
@@ -270,10 +261,7 @@ window.loadUsers = async function () {
   box.innerHTML = "Loading users...";
  
   try {
-    const res = await fetch(`${API}/api/admin/users`, {
-      headers: getAuthHeaders({ json: false })
-    });
-    const users = await res.json();
+    const users = await fetchAdminJson(`${API}/api/admin/users`);
  
     box.innerHTML = "";
  

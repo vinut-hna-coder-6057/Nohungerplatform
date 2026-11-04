@@ -17,8 +17,11 @@ exports.getStats = async (req, res) => {
     });
 
   } catch (err) {
-    console.error("Admin stats error:", err);
-    res.json({});
+    console.error("Admin stats error:", err.name, err.code || "unknown");
+    res.status(500).json({
+      success: false,
+      message: "Unable to fetch dashboard stats"
+    });
   }
 };
 
@@ -26,8 +29,12 @@ exports.getUsers = async (req, res) => {
   try {
     const users = await User.find().select("-password").sort({ createdAt: -1 });
     res.json(users);
-  } catch {
-    res.json([]);
+  } catch (err) {
+    console.error("Admin user retrieval error:", err.name, err.code || "unknown");
+    res.status(500).json({
+      success: false,
+      message: "Unable to fetch users"
+    });
   }
 };
 
@@ -44,8 +51,11 @@ exports.deleteUser = async (req, res) => {
 
     res.json({ success: true });
   } catch (err) {
-   
-    res.json({ success: false });
+    console.error("Admin user deletion error:", err.name, err.code || "unknown");
+    res.status(500).json({
+      success: false,
+      message: "Unable to delete user"
+    });
   }
 };
 
@@ -53,7 +63,11 @@ exports.getDonations = async (req, res) => {
   try {
     const data = await Donation.find().sort({ createdAt: -1 });
     res.json(data);
-  } catch {
-    res.json([]);
+  } catch (err) {
+    console.error("Admin donation retrieval error:", err.name, err.code || "unknown");
+    res.status(500).json({
+      success: false,
+      message: "Unable to fetch donations"
+    });
   }
 };
